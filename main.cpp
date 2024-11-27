@@ -1,14 +1,32 @@
 #include <iostream>
-#include "ThreadPool.hpp"
+#include "ThreadPool.h"
+
+class MyTask : public Task {
+public:
+    void run() override {
+        std::cout << "begin threadFunc" << ", threadID: " << std::this_thread::get_id() << std::endl;
+        std::cout << "end threadFunc" << ", threadID: " << std::this_thread::get_id() << std::endl;
+    }
+};
+
 
 int main() {
-    ThreadPool thread_pool(4);
-    for (int i = 0; i < 1000; ++i) {
-        auto rsfuture = thread_pool.enques([](int a, int b) -> int {
-            std::cout << "当线程：" << std::this_thread::get_id() << std::endl;
-            return a + b;
-        }, 10 * i, 10 * i);
-        std::cout << "thread rs:" << rsfuture.get() << std::endl;
-    }
-    return 0;
+    ThreadPool pool;
+    pool.start(4);
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    while (true) {}
 }
