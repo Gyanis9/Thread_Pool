@@ -13,7 +13,10 @@ ThreadPool::ThreadPool() : m_initThreadSize(4), m_taskSize(0), m_taskQueMAXThrea
 }
 
 ThreadPool::~ThreadPool() {
-
+    isPoolRunning = false;
+    std::unique_lock<std::mutex> lock(m_taskQueMex);
+    m_notEmpty.notify_all();
+    m_exit.wait(lock, [&]() -> bool { return m_threads.empty(); });
 }
 
 void ThreadPool::setThreadSizeThreadHold(int thread_hold) {
@@ -87,45 +90,57 @@ void ThreadPool::threadFunc(int threadID) {
 
     auto last_time = std::chrono::high_resolution_clock().now();
     std::shared_ptr<Task> task;
-    for (;;) {
+    while (isPoolRunning) {
         {
             {
                 std::unique_lock<std::mutex> lock(m_taskQueMex);
                 std::cout << "tid: " << std::this_thread::get_id() << " 尝试获取任务..." << std::endl;
-                if (m_poolMode == PoolMode::MODE_CACHED) {
+                {
                     while (m_taskQu.size() == 0) {
-                        if (std::cv_status::no_timeout == m_notEmpty.wait_for(lock, std::chrono::seconds(1))) {
-                            auto now_time = std::chrono::high_resolution_clock().now();
-                            auto dur = std::chrono::duration_cast<std::chrono::seconds>(now_time - last_time);
-                            if (dur.count() >= THREAD_MAX_IDLE_TIME && m_curThreadSize > m_initThreadSize) {
-                                m_threads.erase(threadID);
-                                m_curThreadSize--;
-                                m_idleThreadSize--;
-                                std::cout << "tid = " << std::this_thread::get_id() << " exit!" << std::endl;
-                                break;
-                            }
+                        if (!isPoolRunning) {
+                            m_threads.erase(threadID);
+                            std::cout << "threadID: " << std::this_thread::get_id() << " exit" << std::endl;
+                            m_exit.notify_all();
+                            return;
                         }
+                        if (m_poolMode == PoolMode::MODE_CACHED) {
+                            if (std::cv_status::no_timeout == m_notEmpty.wait_for(lock, std::chrono::seconds(1))) {
+                                auto now_time = std::chrono::high_resolution_clock().now();
+                                auto dur = std::chrono::duration_cast<std::chrono::seconds>(now_time - last_time);
+                                if (dur.count() >= THREAD_MAX_IDLE_TIME && m_curThreadSize > m_initThreadSize) {
+                                    m_threads.erase(threadID);
+                                    m_curThreadSize--;
+                                    m_idleThreadSize--;
+                                    std::cout << "tid = " << std::this_thread::get_id() << " exit!" << std::endl;
+                                    break;
+                                }
+                            }
+                        } else {
+                            m_notEmpty.wait(lock);
+                        }
+
                     }
-                } else {
-                    m_notEmpty.wait(lock, [&]() -> bool { return !m_taskQu.empty(); });
+                    m_idleThreadSize--;
+                    std::cout << "tid: " << std::this_thread::get_id() << " 获取任务成功..." << std::endl;
+                    task = m_taskQu.front();
+                    m_taskQu.pop();
+                    m_taskSize--;
+                    if (m_taskSize > 0) {
+                        m_notEmpty.notify_all();
+                    }
+                    m_notFull.notify_all();
                 }
-                m_idleThreadSize--;
-                std::cout << "tid: " << std::this_thread::get_id() << " 获取任务成功..." << std::endl;
-                task = m_taskQu.front();
-                m_taskQu.pop();
-                m_taskSize--;
-                if (m_taskSize > 0) {
-                    m_notEmpty.notify_all();
+                if (task != nullptr) {
+                    task->exec();
                 }
-                m_notFull.notify_all();
+                m_idleThreadSize++;
+                last_time = std::chrono::high_resolution_clock().now();
             }
-            if (task != nullptr) {
-                task->exec();
-            }
-            m_idleThreadSize++;
-            last_time = std::chrono::high_resolution_clock().now();
         }
     }
+    m_threads.erase(threadID);
+    std::cout << "threadID: " << std::this_thread::get_id() << " exit" << std::endl;
+    m_exit.notify_all();
 }
 
 /**-----------------------------------------------Task----------------------------------------------*/
@@ -146,7 +161,9 @@ Task::Task() : m_result(nullptr) {}
 
 
 /**-----------------------------------------------Result--------------------------------------------------------*/
-Result::Result(std::shared_ptr<Task> task, bool isValid) : m_task(task), m_isValid(isValid) {
+Result::Result(std::shared_ptr<Task>
+               task, bool
+               isValid) : m_task(task), m_isValid(isValid) {
     m_task->setResult(this);
 }
 

@@ -88,7 +88,7 @@ public:
     void post() {
         std::unique_lock<std::mutex> lock(m_myx);
         ++m_res;
-        m_cond.notify_one();
+        m_cond.notify_all();
     }
 
 private:
@@ -191,7 +191,7 @@ public:
 
 private:
     /**实际运行的线程函数*/
-    [[noreturn]] void threadFunc(int threadID);
+    void threadFunc(int threadID);
 
     bool checkRunningState() const;
 
@@ -209,13 +209,11 @@ private:
 
     PoolMode m_poolMode;/**线程池模式*/
 
-
-
-
     /**------------进程通信------------*/
     std::mutex m_taskQueMex;
     std::condition_variable m_notEmpty;
     std::condition_variable m_notFull;
+    std::condition_variable m_exit;
 };
 
 
