@@ -1,49 +1,44 @@
+//
+// Created by guo on 24-12-1.
+//
 #include <iostream>
-#include "ThreadPool.h"
 
-
-using uLong = unsigned long long;
+#include <iostream>
+#include "lib/ThreadPool.h"
 
 class MyTask : public Task {
 public:
-    MyTask(uLong begin, uLong end) : m_begin(begin), m_end(end) {}
+    MyTask() = default;
 
-    Any run() override {
-        std::cout << "tid:" << std::this_thread::get_id() << "     "
-                  << "begin!" << std::endl;
+    void run() override {
+        std::cout << "tie: " << std::this_thread::get_id() << " begin!" << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        uLong sum = 0;
-        for (uLong i = m_begin; i <= m_end; i++)
-            sum += i;
-        std::cout << "tid:" << std::this_thread::get_id() << "    "
-                  << "end!" << std::endl;
-
-        return sum;
+        std::cout << "tie: " << std::this_thread::get_id() << " end!" << std::endl;
     }
 
-    ~MyTask() = default;
-
-private:
-    uLong m_begin;
-    uLong m_end;
+    ~MyTask() override = default;
 };
 
 
+int add(int num1, int num2) {
+    return num1 + num2;
+}
+
+int add(int num1, int num2, int num3) {
+    return num1 + num2 + num3;
+}
+
+int add(int num1, int num2, int num3, int num4) {
+    return num1 + num2 + num3 + num4;
+}
+
 int main() {
-    {
-        ThreadPool pool;
-        pool.setMode(PoolMode::MODE_CACHED);
-        pool.start(6);
-        Result res1 = pool.submitTask(std::make_shared<MyTask>(0, 100000000));
-        Result res2 = pool.submitTask(std::make_shared<MyTask>(100000000, 200000000));
-        Result res3 = pool.submitTask(std::make_shared<MyTask>(300000000, 400000000));
-        uLong sum1 = res1.get().cast_<uLong>();
-        std::cout << sum1 << std::endl;
-        uLong sum2 = res2.get().cast_<uLong>();
-        std::cout << sum2 << std::endl;
-        uLong sum3 = res3.get().cast_<uLong>();
-        std::cout << sum3 << std::endl;
-        std::cout << "sum = " << sum1 + sum2 + sum3 << std::endl;
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    ThreadPool pool;
+    pool.setMaxThreadSize(4);
+    pool.start();
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    pool.submitTask(std::make_shared<MyTask>());
+    getchar();
 }
