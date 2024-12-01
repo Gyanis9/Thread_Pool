@@ -1,4 +1,3 @@
-//
 // Created by guo on 24-11-27.
 //
 #include "ThreadPool.h"
@@ -89,14 +88,14 @@ Result ThreadPool::submitTask(std::shared_ptr<Task> sp) {
 void ThreadPool::threadFunc(int threadID) {
 
     auto last_time = std::chrono::high_resolution_clock().now();
-    std::shared_ptr<Task> task;
-    while (isPoolRunning) {
+    std::shared_ptr<Task> task= nullptr;
+   for(;;) {
         {
             {
                 std::unique_lock<std::mutex> lock(m_taskQueMex);
                 std::cout << "tid: " << std::this_thread::get_id() << " 尝试获取任务..." << std::endl;
                 {
-                    while (m_taskQu.size() == 0) {
+                    while ( m_taskQu.size() == 0) {
                         if (!isPoolRunning) {
                             m_threads.erase(threadID);
                             std::cout << "threadID: " << std::this_thread::get_id() << " exit" << std::endl;
@@ -112,7 +111,7 @@ void ThreadPool::threadFunc(int threadID) {
                                     m_curThreadSize--;
                                     m_idleThreadSize--;
                                     std::cout << "tid = " << std::this_thread::get_id() << " exit!" << std::endl;
-                                    break;
+                                    return ;
                                 }
                             }
                         } else {
@@ -138,9 +137,6 @@ void ThreadPool::threadFunc(int threadID) {
             }
         }
     }
-    m_threads.erase(threadID);
-    std::cout << "threadID: " << std::this_thread::get_id() << " exit" << std::endl;
-    m_exit.notify_all();
 }
 
 /**-----------------------------------------------Task----------------------------------------------*/

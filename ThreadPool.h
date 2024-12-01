@@ -174,7 +174,7 @@ public:
 
     ~ThreadPool();
 
-    void start(int initThreadSize = 4);
+    void start(int initThreadSize = std::thread::hardware_concurrency());
 
     void setThreadSizeThreadHold(int thread_hold);
 
