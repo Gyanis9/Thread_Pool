@@ -157,7 +157,7 @@ protected:
                             }
                         }
                     } else {
-                        m_notEmpty.wait(lock);;
+                        m_notEmpty.wait(lock);
                     }
                 }
                 m_spareThreadSize--;
