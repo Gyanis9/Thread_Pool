@@ -2,8 +2,8 @@
 // Created by guo on 24-12-1.
 //
 #include <iostream>
-#include "lib/ThreadPool.h"
 #include "lib/Any.hpp"
+#include "lib/ThreadPool_final.hpp"
 
 /*class MyTask : public Task {
 public:
@@ -17,7 +17,7 @@ public:
 
     ~MyTask() override = default;
 };*/
-
+/*
 class MyTask : public Task {
 public:
     MyTask(int begin, int end) : begin(begin), end(end) {}
@@ -36,36 +36,31 @@ public:
 
 private:
     int begin, end;
-};
+};*/
 
 
-int add(int num1, int num2) {
+int add2(int num1, int num2) {
     return num1 + num2;
 }
 
-int add(int num1, int num2, int num3) {
+int add3(int num1, int num2, int num3) {
     return num1 + num2 + num3;
 }
 
-int add(int num1, int num2, int num3, int num4) {
+int add4(int num1, int num2, int num3, int num4) {
     return num1 + num2 + num3 + num4;
 }
 
 int main() {
-    ThreadPool pool;
-    pool.setMaxThreadSize(4);
-    pool.start();
-    auto result1 = pool.submitTask(std::make_shared<MyTask>(1, 10));
-    auto result2 = pool.submitTask(std::make_shared<MyTask>(10, 20));
-    auto result3 = pool.submitTask(std::make_shared<MyTask>(20, 30));
-    auto result4 = pool.submitTask(std::make_shared<MyTask>(30, 40));
-    auto result5 = pool.submitTask(std::make_shared<MyTask>(30, 40));
-    auto result6 = pool.submitTask(std::make_shared<MyTask>(30, 40));
-    auto result7 = pool.submitTask(std::make_shared<MyTask>(30, 40));
-    std::cout << result1.get().cast_<int>() << std::endl;
-    std::cout << result2.get().cast_<int>() << std::endl;
-    std::cout << result3.get().cast_<int>() << std::endl;
-    std::cout << result4.get().cast_<int>() << std::endl;
+    {
+        ThreadPool_final pool;
+        pool.start(4);
+        std::future<int> result1 = pool.submitTask(add2, 1, 2);
+        std::future<int> result2 = pool.submitTask(add3, 1, 2, 3);
+        std::future<int> result3 = pool.submitTask(add4, 1, 2, 3, 4);
+        std::cout << "resul1: " << result1.get() << std::endl;
+        std::cout << "resul2: " << result2.get() << std::endl;
+        std::cout << "resul3: " << result3.get() << std::endl;
+    }
     getchar();
-
 }

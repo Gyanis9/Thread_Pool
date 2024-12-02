@@ -19,11 +19,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <unordered_map>
 #include <functional>
-
-enum class THREAD_MODE {
-    MODE_CACHED,
-    MODE_FIXED,
-};
+#include "thread_mode.h"
 
 class ThreadPool {
 
