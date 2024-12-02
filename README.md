@@ -1,5 +1,5 @@
 **项目名称：** 基于可变参模板实现的线程池  
-**Git 地址：** [git@github.com:Gyanis9/Thread_Pool.git] 
+**Git 地址：** [git@github.com:Gyanis9/Thread_Pool.git]  
 **平台与工具：** CLion2024.1, Ubuntu24.04, g++, GDB（用于调试和死锁分析）  
 **项目概述：**
 - 开发了一个高性能线程池，用于处理高并发网络服务器和后台任务，着重于可扩展性和灵活的任务管理。
