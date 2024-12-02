@@ -9,17 +9,20 @@
 
 class Thread {
 public:
-    using Threadfunc = std::function<void()>;
+    using Threadfunc = std::function<void(int)>;
 
     explicit Thread(Threadfunc func);
 
     ~Thread() = default;
 
-    void start();
+    void start(unsigned int threadID);
+
+    [[nodiscard]] unsigned int getID() const { return m_threadID; }
 
 private:
     Threadfunc func;
-
+    unsigned int m_threadID;
+    static unsigned int cur_threadID;
 };
 
 
